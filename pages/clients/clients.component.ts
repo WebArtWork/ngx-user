@@ -1,39 +1,99 @@
 import { Component } from '@angular/core';
-import { User } from 'src/app/core/interfaces/user';
-import { UserService } from 'src/app/core/services/user.service';
 import { FormService } from 'src/app/modules/form/form.service';
 import { FormInterface } from 'src/app/modules/form/interfaces/form.interface';
 import { TranslateService } from 'src/app/modules/translate/translate.service';
 import { AlertService, CoreService } from 'wacom';
+import {
+	NewuserserviceService
+} from './newuserservice.service';
+import { User } from '../../interfaces/user.interface';
 
 @Component({
-	templateUrl: "./clients.component.html",
-	styleUrls: ["./clients.component.scss"],
+	templateUrl: './clients.component.html',
+	styleUrls: ['./clients.component.scss']
 })
 export class ClientsComponent {
-	form: FormInterface = this._form.getForm('user');
-
+	columns = ['name', 'email'];
+	form: FormInterface = this._form.getForm('user', {
+		formId: 'user',
+		title: 'User',
+		components: [
+			{
+				name: 'Text',
+				key: 'name',
+				focused: true,
+				fields: [
+					{
+						name: 'Placeholder',
+						value: 'fill Client name'
+					},
+					{
+						name: 'Label',
+						value: 'Name'
+					}
+				]
+			},
+			{
+				name: 'Email',
+				key: 'email',
+				fields: [
+					{
+						name: 'Placeholder',
+						value: 'fill Client email'
+					},
+					{
+						name: 'Label',
+						value: 'Email'
+					}
+				]
+			}
+		]
+	});
+	users: User[] = [];
+	private _page = 1;
+	setUsers(page = this._page) {
+		this._page = page;
+		this._core.afterWhile(
+			this,
+			() => {
+				this._us.get(page).subscribe((users) => {
+					this.users.splice(0, this.users.length);
+					this.users.push(...users);
+				});
+			},
+			250
+		);
+	}
 	config = {
+		paginate: this.setUsers.bind(this),
+		perPage: 20,
+		setPerPage: this._us.setPerPage.bind(this._us),
+		allDocs: false,
 		create: () => {
 			this._form
 				.modal<User>(this.form, {
 					label: 'Create',
 					click: (created: unknown, close: () => void) => {
-						this.us.create(created as User);
-						close();
+						this._us.create(
+							created as User,
+							'Client has been created',
+							close.bind(this)
+						);
 					}
 				})
-				.then(this.us.create.bind(this));
+				.then(this._us.create.bind(this));
 		},
 		update: (doc: User) => {
 			this._form.modal<User>(this.form, [], doc).then((updated: User) => {
 				this._core.copy(updated, doc);
-				this.us.save(doc);
+				this._us.update(doc, 'Client has been updated');
 			});
 		},
 		delete: (user: User) => {
 			this._alert.question({
-				text: this._translate.translate('Common.Are you sure you want to delete this user?'),
+				text: this._translate.translate(
+					'Common.Are you sure you want to delete this client?'
+				),
 				buttons: [
 					{
 						text: this._translate.translate('Common.No')
@@ -41,25 +101,24 @@ export class ClientsComponent {
 					{
 						text: this._translate.translate('Common.Yes'),
 						callback: () => {
-							this.us.delete(user);
+							this._us.delete(user, 'Client has been deleted', ()=>{
+								this.setUsers();
+							}, ()=>{}, {
+								name: 'admin'
+							});
 						}
 					}
 				]
 			});
 		}
 	};
-
-	columns = ['name', 'email'];
-
 	constructor(
-		private _form: FormService,
-		public us: UserService,
+		private _translate: TranslateService,
+		private _us: NewuserserviceService,
 		private _alert: AlertService,
 		private _core: CoreService,
-		private _translate: TranslateService
+		private _form: FormService
 	) {
-		for (const role of this.us.roles) {
-			this.columns.push(role);
-		}
+		this.setUsers();
 	}
 }
