@@ -3,9 +3,7 @@ import { FormService } from 'src/app/modules/form/form.service';
 import { FormInterface } from 'src/app/modules/form/interfaces/form.interface';
 import { TranslateService } from 'src/app/modules/translate/translate.service';
 import { AlertService, CoreService } from 'wacom';
-import {
-	NewuserserviceService
-} from './newuserservice.service';
+import { UserService } from '../../services/user.service';
 import { User } from '../../interfaces/user.interface';
 
 @Component({
@@ -56,7 +54,7 @@ export class ClientsComponent {
 		this._core.afterWhile(
 			this,
 			() => {
-				this._us.get(page).subscribe((users) => {
+				this._us.get({ page }).subscribe((users) => {
 					this.users.splice(0, this.users.length);
 					this.users.push(...users);
 				});
@@ -74,11 +72,15 @@ export class ClientsComponent {
 				.modal<User>(this.form, {
 					label: 'Create',
 					click: (created: unknown, close: () => void) => {
-						this._us.create(
-							created as User,
-							'Client has been created',
-							close.bind(this)
-						);
+						this._us.create(created as User, {
+							alert: this._translate.translate(
+								'User.Client has been created'
+							),
+							callback: () => {
+								this.setUsers();
+								close();
+							}
+						});
 					}
 				})
 				.then(this._us.create.bind(this));
@@ -86,7 +88,11 @@ export class ClientsComponent {
 		update: (doc: User) => {
 			this._form.modal<User>(this.form, [], doc).then((updated: User) => {
 				this._core.copy(updated, doc);
-				this._us.update(doc, 'Client has been updated');
+				this._us.update(doc, {
+					alert: this._translate.translate(
+						'User.Client has been updated'
+					)
+				});
 			});
 		},
 		delete: (user: User) => {
@@ -101,10 +107,14 @@ export class ClientsComponent {
 					{
 						text: this._translate.translate('Common.Yes'),
 						callback: () => {
-							this._us.delete(user, 'Client has been deleted', ()=>{
-								this.setUsers();
-							}, ()=>{}, {
-								name: 'admin'
+							this._us.delete(user, {
+								name: 'admin',
+								alert: this._translate.translate(
+									'User.Client has been deleted'
+								),
+								callback: () => {
+									this.setUsers();
+								}
 							});
 						}
 					}
@@ -114,7 +124,7 @@ export class ClientsComponent {
 	};
 	constructor(
 		private _translate: TranslateService,
-		private _us: NewuserserviceService,
+		private _us: UserService,
 		private _alert: AlertService,
 		private _core: CoreService,
 		private _form: FormService

@@ -1,8 +1,8 @@
 <!--==== Table Module ====-->
-<wtable [columns]="columns" [config]="config" [rows]="us.users">
-	<ng-template *ngFor="let role of us.roles" [cell]="role" let-element>
+<wtable [columns]="columns" [config]="config" [rows]="users">
+	<ng-template *ngFor="let role of roles" [cell]="role" let-element>
 		<winput
-			(wChange)="element.is[role] = $event; us.save(element)"
+			(wChange)="element.is[role] = $event; update(element)"
 			[value]="element.is[role]"
 			type="checkbox"
 		></winput>

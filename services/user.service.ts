@@ -1,90 +1,71 @@
 import { Injectable } from '@angular/core';
-import { MongoService, AlertService } from 'wacom';
-
-export interface User {
-	_id: string;
-	name: string;
-	description: string;
-}
+import { AlertService, CoreService, HttpService, StoreService, CrudService } from 'wacom';
+import { User } from '../interfaces/user.interface';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class UserService {
+export class UserService extends CrudService<User> {
+	private store: StoreService;
+	roles = ['admin', 'operator', 'agent', 'owner'];
+	mode = '';
 	users: User[] = [];
-
-	_users: any = {};
-
-	new(): User {
-		return {
-			_id: '',
-			name: '',
-			description: ''
-		}
-	}
-
+	user: User = localStorage.getItem('waw_user')
+		? JSON.parse(localStorage.getItem('waw_user') as string)
+		: this.new();
 	constructor(
-		private mongo: MongoService,
-		private alert: AlertService
+		_http: HttpService,
+		_store: StoreService,
+		_alert: AlertService,
+		_core: CoreService
 	) {
-		this.users = mongo.get('user', {}, (arr: any, obj: any) => {
-			this._users = obj;
+		super(
+			{
+				name: 'user'
+			},
+			_http,
+			_store,
+			_alert,
+			_core
+		);
+
+		this.store = _store;
+		this.get().subscribe((users: User[]) => this.users.push(...users));
+		this.fetch({}, { name: 'me' }).subscribe(this.setUser.bind(this));
+
+		this.store.get('mode', (mode) => {
+			if (mode) {
+				this.setMode(mode);
+			}
 		});
 	}
 
-	create(
-		user: User = this.new(),
-		callback = (created: User) => {},
-		text = 'user has been created.'
-	) {
-		if (user._id) {
-			this.save(user);
+	setMode(mode = ''): void {
+		if (mode) {
+			this.store.set('mode', mode);
+
+			(document.body.parentNode as HTMLElement).classList.add(mode);
 		} else {
-			this.mongo.create('user', user, (created: User) => {
-				callback(created);
-				this.alert.show({ text });
-			});
+			this.store.remove('mode');
+
+			(document.body.parentNode as HTMLElement).classList.remove('dark');
 		}
+
+		this.mode = mode;
 	}
 
-	doc(userId: string): User {
-		if(!this._users[userId]){
-			this._users[userId] = this.mongo.fetch('user', {
-				query: {
-					_id: userId
-				}
-			});
-		}
-		return this._users[userId];
+	setUser(user: User): void {
+		this.user = user;
+		localStorage.setItem('waw_user', JSON.stringify(user));
 	}
 
-	update(
-		user: User,
-		callback = (created: User) => {},
-		text = 'user has been updated.'
-	): void {
-		this.mongo.afterWhile(user, ()=> {
-			this.save(user, callback, text);
-		});
+	role(role: string): boolean {
+		return !!this.user.is[role];
 	}
 
-	save(
-		user: User,
-		callback = (created: User) => {},
-		text = 'user has been updated.'
-	): void {
-		this.mongo.update('user', user, () => {
-			if(text) this.alert.show({ text, unique: user });
-		});
-	}
-
-	delete(
-		user: User,
-		callback = (created: User) => {},
-		text = 'user has been deleted.'
-	): void {
-		this.mongo.delete('user', user, () => {
-			if(text) this.alert.show({ text });
+	updateAdmin(user: User): void {
+		this.update(user, {
+			name: 'admin'
 		});
 	}
 }

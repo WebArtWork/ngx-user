@@ -1,12 +1,10 @@
 import { Component } from '@angular/core';
-import { User as OldUser } from 'src/app/core/interfaces/user';
-import { UserService } from 'src/app/core/services/user.service';
 import { FormService } from 'src/app/modules/form/form.service';
 import { FormInterface } from 'src/app/modules/form/interfaces/form.interface';
 import { TranslateService } from 'src/app/modules/translate/translate.service';
 import { AlertService, CoreService } from 'wacom';
-import { NewuserserviceService } from '../clients/newuserservice.service';
 import { User } from '../../interfaces/user.interface';
+import { UserService } from '../../services/user.service';
 
 @Component({
 	selector: 'app-users',
@@ -24,8 +22,10 @@ export class UsersComponent {
 					click: (created: unknown, close: () => void) => {
 						this._us.create(
 							created as User,
-							'User has been created',
-							close.bind(this)
+							{
+								alert: 'User has been created',
+								callback: close.bind(this)
+							}
 						);
 					}
 				})
@@ -34,7 +34,9 @@ export class UsersComponent {
 		update: (doc: User) => {
 			this._form.modal<User>(this.form, [], doc).then((updated: User) => {
 				this._core.copy(updated, doc);
-				this._us.update(doc, 'User has been updated');
+				this._us.update(doc, {
+					alert: 'User has been updated'
+				});
 			});
 		},
 		delete: (user: User) => {
@@ -51,13 +53,12 @@ export class UsersComponent {
 						callback: () => {
 							this._us.delete(
 								user,
-								'User has been deleted',
-								() => {
-									// this.setUsers();
-								},
-								() => {},
 								{
-									name: 'admin'
+									name: 'admin',
+									alert: 'User has been deleted',
+									callback: ()=>{
+										// this.setUsers();
+									}
 								}
 							);
 						}
@@ -69,16 +70,26 @@ export class UsersComponent {
 
 	columns = ['name', 'email'];
 
+	get roles(): string[] {
+		return this._us.roles;
+	}
+	get users(): User[] {
+		return this._us.users;
+	}
+
 	constructor(
-		private _us: NewuserserviceService,
+		private _translate: TranslateService,
+		private _us: UserService,
 		private _form: FormService,
-		public us: UserService,
 		private _alert: AlertService,
 		private _core: CoreService,
-		private _translate: TranslateService
 	) {
-		for (const role of this.us.roles) {
+		for (const role of this._us.roles) {
 			this.columns.push(role);
 		}
+	}
+
+	update(user: User): void {
+		this._us.updateAdmin(user);
 	}
 }
