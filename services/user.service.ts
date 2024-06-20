@@ -1,13 +1,22 @@
 import { Injectable } from '@angular/core';
-import { AlertService, CoreService, HttpService, StoreService, CrudService } from 'wacom';
+import {
+	AlertService,
+	CoreService,
+	HttpService,
+	StoreService,
+	CrudService
+} from 'wacom';
 import { User } from '../interfaces/user.interface';
+import { Router } from '@angular/router';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class UserService extends CrudService<User> {
+	private http: HttpService;
 	private store: StoreService;
-	roles = ['admin', 'operator', 'agent', 'owner'];
+	private alert: AlertService;
+	roles = ['admin'];
 	mode = '';
 	users: User[] = [];
 	user: User = localStorage.getItem('waw_user')
@@ -17,7 +26,8 @@ export class UserService extends CrudService<User> {
 		_http: HttpService,
 		_store: StoreService,
 		_alert: AlertService,
-		_core: CoreService
+		_core: CoreService,
+		private _router: Router
 	) {
 		super(
 			{
@@ -30,6 +40,8 @@ export class UserService extends CrudService<User> {
 		);
 
 		this.store = _store;
+		this.http = _http;
+		this.alert = _alert;
 		this.get().subscribe((users: User[]) => this.users.push(...users));
 		this.fetch({}, { name: 'me' }).subscribe(this.setUser.bind(this));
 
@@ -63,8 +75,59 @@ export class UserService extends CrudService<User> {
 		return !!this.user.is[role];
 	}
 
+	updateMe(): void {
+		this.setUser(this.user);
+		this.update(this.user);
+	}
+
+	updateMeAfterWhile(): void {
+		this.setUser(this.user);
+		this.updateAfterWhile(this.user);
+	}
+
+	changePassword(oldPass: string, newPass: string): void {
+		this.http.post(
+			'/api/user/changePassword',
+			{
+				newPass: newPass,
+				oldPass: oldPass
+			},
+			(resp: boolean) => {
+				if (resp) {
+					this.alert.info({
+						text: 'Successfully changed password'
+					});
+				} else {
+					this.alert.error({
+						text: 'Failed to change password'
+					});
+				}
+			}
+		);
+	}
+
+	logout(): void {
+		this.user = this.new();
+
+		localStorage.removeItem('waw_user');
+
+		this._router.navigateByUrl('/sign');
+
+		this.http.remove('token');
+
+		setTimeout(() => {
+			location.reload();
+		}, 100);
+	}
+
 	updateAdmin(user: User): void {
 		this.update(user, {
+			name: 'admin'
+		});
+	}
+
+	deleteAdmin(user: User): void {
+		this.delete(user, {
 			name: 'admin'
 		});
 	}
