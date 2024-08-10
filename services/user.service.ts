@@ -78,7 +78,7 @@ export class UserService extends CrudService<User> {
 	setUser(user: User): void {
 		this.user = user;
 		localStorage.setItem('waw_user', JSON.stringify(user));
-		this.core.done('us.user');
+		this.core.complete('us.user');
 	}
 
 	role(role: string): boolean {
