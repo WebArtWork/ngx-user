@@ -14,16 +14,20 @@ import { environment } from 'src/environments/environment';
 	providedIn: 'root'
 })
 export class UserService extends CrudService<User> {
-	private http: HttpService;
-	private store: StoreService;
-	private alert: AlertService;
-	private core: CoreService;
-	roles = (environment as unknown as { roles: string[] }).roles || ['admin'];
+	roles = (
+		(environment as unknown as { roles: string[] }).roles || []
+	).concat(['admin']);
+
+	employees = (environment as unknown as { roles: string[] }).roles || [];
+
 	mode = '';
-	users: User[] = [];
+
+	users: User[] = this.getDocs();
+
 	user: User = localStorage.getItem('waw_user')
 		? JSON.parse(localStorage.getItem('waw_user') as string)
 		: this.new();
+
 	constructor(
 		_http: HttpService,
 		_store: StoreService,
@@ -42,12 +46,17 @@ export class UserService extends CrudService<User> {
 		);
 
 		this.store = _store;
+
 		this.http = _http;
+
 		this.alert = _alert;
+
 		this.core = _core;
+
 		if (this.http.header('token')) {
 			this.fetch({}, { name: 'me' }).subscribe(this.setUser.bind(this));
-			this.load();
+
+			this.get();
 		}
 
 		this.store.get('mode', (mode) => {
@@ -55,10 +64,6 @@ export class UserService extends CrudService<User> {
 				this.setMode(mode);
 			}
 		});
-	}
-
-	load(): void {
-		this.get().subscribe((users: User[]) => this.users.push(...users));
 	}
 
 	setMode(mode = ''): void {
@@ -77,7 +82,9 @@ export class UserService extends CrudService<User> {
 
 	setUser(user: User): void {
 		this.user = user;
+
 		localStorage.setItem('waw_user', JSON.stringify(user));
+
 		this.core.complete('us.user');
 	}
 
@@ -87,18 +94,21 @@ export class UserService extends CrudService<User> {
 
 	updateMe(): void {
 		this.setUser(this.user);
+
 		this.update(this.user);
 	}
 
 	updateMeAfterWhile(): void {
 		this.setUser(this.user);
+
 		this.updateAfterWhile(this.user);
 	}
 
-	private _changingPassword = false;
 	changePassword(oldPass: string, newPass: string): void {
 		if (this._changingPassword) return;
+
 		this._changingPassword = true;
+
 		this.http.post(
 			'/api/user/changePassword',
 			{
@@ -107,6 +117,7 @@ export class UserService extends CrudService<User> {
 			},
 			(resp: boolean) => {
 				this._changingPassword = false;
+
 				if (resp) {
 					this.alert.info({
 						text: 'Successfully changed password'
@@ -145,4 +156,14 @@ export class UserService extends CrudService<User> {
 			name: 'admin'
 		});
 	}
+
+	private _changingPassword = false;
+
+	private http: HttpService;
+
+	private store: StoreService;
+
+	private alert: AlertService;
+
+	private core: CoreService;
 }
