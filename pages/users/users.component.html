@@ -1,5 +1,5 @@
 <!--==== Table Module ====-->
-<wtable [columns]="columns" [config]="config" [rows]="users">
+<wtable [columns]="columns" [config]="config" [rows]="users" title="Users">
 	<ng-template *ngFor="let role of roles" [cell]="role" let-element>
 		<winput
 			(wChange)="element.is[role] = $event; update(element)"
