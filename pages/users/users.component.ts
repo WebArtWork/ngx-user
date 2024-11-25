@@ -9,7 +9,8 @@ import { UserService } from '../../services/user.service';
 @Component({
 	selector: 'app-users',
 	templateUrl: './users.component.html',
-	styleUrls: ['./users.component.scss']
+	styleUrls: ['./users.component.scss'],
+	standalone: false
 })
 export class UsersComponent {
 	form: FormInterface = this._form.getForm('user');
@@ -60,7 +61,19 @@ export class UsersComponent {
 					}
 				]
 			});
-		}
+		},
+		headerButtons: [
+			{
+				icon: 'playlist_add',
+				click: this._bulkManagement(),
+				class: 'playlist'
+			},
+			{
+				icon: 'edit_note',
+				click: this._bulkManagement(false),
+				class: 'edit'
+			}
+		]
 	};
 
 	columns = ['name', 'email'];
@@ -75,10 +88,10 @@ export class UsersComponent {
 
 	constructor(
 		private _translate: TranslateService,
-		private _us: UserService,
-		private _form: FormService,
 		private _alert: AlertService,
-		private _core: CoreService
+		private _form: FormService,
+		private _core: CoreService,
+		private _us: UserService
 	) {
 		for (const role of this._us.roles) {
 			this.columns.push(role);
@@ -87,5 +100,29 @@ export class UsersComponent {
 
 	update(user: User): void {
 		this._us.updateAdmin(user);
+	}
+
+	private _bulkManagement(create = true): () => void {
+		return (): void => {
+			this._form
+				.modalDocs<User>(create ? [] : this.users)
+				.then((users: User[]) => {
+					for (const user of this.users) {
+						if (!users.find((_user) => _user._id === user._id)) {
+							this._us.delete(user);
+						}
+					}
+
+					for (const user of users) {
+						if (create) {
+							this._us.create(user);
+						} else {
+							this._core.copy(user, this._us.doc(user._id));
+
+							this._us.update(user);
+						}
+					}
+				});
+		};
 	}
 }
