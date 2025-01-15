@@ -53,11 +53,22 @@ export class UserService extends CrudService<User> {
 
 		this.core = _core;
 
-		if (this.http.header('token')) {
-			this.fetch({}, { name: 'me' }).subscribe(this.setUser.bind(this));
+		this.fetch({}, { name: 'me' }).subscribe((user) => {
+			if (user) {
+				if (
+					!localStorage.getItem('waw_user') &&
+					this._router.url === '/sign'
+				) {
+					this._router.navigateByUrl('/profile');
+				}
 
-			this.get();
-		}
+				this.setUser(user);
+
+				this.get();
+			} else if (localStorage.getItem('waw_user')) {
+				this.logout();
+			}
+		});
 
 		this.store.get('mode', (mode) => {
 			if (mode) {
@@ -136,13 +147,13 @@ export class UserService extends CrudService<User> {
 
 		localStorage.removeItem('waw_user');
 
-		this._router.navigateByUrl('/sign');
+		this.http.get('/api/user/logout').subscribe(() => {
+			this._router.navigateByUrl('/sign');
 
-		this.http.remove('token');
-
-		setTimeout(() => {
-			location.reload();
-		}, 100);
+			setTimeout(() => {
+				location.reload();
+			}, 100);
+		});
 	}
 
 	updateAdmin(user: User): void {
