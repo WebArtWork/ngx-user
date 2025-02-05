@@ -14,6 +14,15 @@ import { environment } from 'src/environments/environment';
 	providedIn: 'root'
 })
 export class UserService extends CrudService<User> {
+	readonly url = environment.url;
+
+	get thumb(): string {
+		return !this.user.thumb ||
+			this.user.thumb.includes('assets/default.png')
+			? 'assets/default.png'
+			: this.url + this.user.thumb;
+	}
+
 	roles = (
 		(environment as unknown as { roles: string[] }).roles || []
 	).concat(['admin']);
