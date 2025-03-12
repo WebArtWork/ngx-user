@@ -59,7 +59,9 @@ export class UserService extends CrudService<User> {
 
 				this.setUser(user);
 
-				this.get();
+				this.get({
+					query: environment.appId ? 'appId=' + environment.appId : ''
+				});
 			} else if (localStorage.getItem('waw_user')) {
 				this.logout();
 			}
