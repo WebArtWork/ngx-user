@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, WritableSignal } from '@angular/core';
 import {
 	AlertService,
 	CoreService,
@@ -39,6 +39,8 @@ export class UserService extends CrudService<User> {
 		? JSON.parse(localStorage.getItem('waw_user') as string)
 		: this.new();
 
+	usersByRole: Record<string, User[]> = {};
+
 	constructor(
 		private _http: HttpService,
 		private _store: StoreService,
@@ -47,8 +49,23 @@ export class UserService extends CrudService<User> {
 		private _router: Router
 	) {
 		super({
-			name: 'user'
+			name: 'user',
+			replace: (user) => {
+				user.roles = [];
+
+				for (const role of this.roles) {
+					if (user.is[role]) {
+						user.roles.push(role);
+					}
+				}
+
+				return user;
+			}
 		});
+
+		this.filteredDocuments(this.usersByRole, 'roles');
+
+		console.log(this);
 
 		this.fetch({}, { name: 'me' }).subscribe((user) => {
 			if (user) {
@@ -83,9 +100,10 @@ export class UserService extends CrudService<User> {
 			this._store.remove('mode');
 
 			for (const _mode of this.modes) {
-				(document.body.parentNode as HTMLElement).classList.remove(_mode);
+				(document.body.parentNode as HTMLElement).classList.remove(
+					_mode
+				);
 			}
-
 		} else {
 			this._store.set('mode', mode);
 
