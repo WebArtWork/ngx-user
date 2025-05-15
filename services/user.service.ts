@@ -31,7 +31,9 @@ export class UserService extends CrudService<User> {
 
 	mode = 'dark';
 
-	modes = ['dark', 'white'];
+	modes = (
+		(environment as unknown as { modes: string[] }).modes || []
+	).concat(['dark', 'white']);
 
 	users: User[] = this.getDocs();
 
@@ -65,8 +67,6 @@ export class UserService extends CrudService<User> {
 
 		this.filteredDocuments(this.usersByRole, 'roles');
 
-		console.log(this);
-
 		this.fetch({}, { name: 'me' }).subscribe((user) => {
 			if (user) {
 				if (
@@ -77,13 +77,13 @@ export class UserService extends CrudService<User> {
 				}
 
 				this.setUser(user);
-
-				this.get({
-					query: environment.appId ? 'appId=' + environment.appId : ''
-				});
 			} else if (localStorage.getItem('waw_user')) {
 				this.logout();
 			}
+		});
+
+		this.get({
+			query: environment.appId ? 'appId=' + environment.appId : ''
 		});
 
 		this._store.get('mode', (mode) => {
