@@ -55,6 +55,14 @@ export class UserService extends CrudService<User> {
 			replace: (user) => {
 				user.roles = [];
 
+				user.data = user.data || {};
+
+				for (const field of (
+					environment as unknown as { userFields: string[] }
+				).userFields || []) {
+					user.data[field] = user.data[field] || {};
+				}
+
 				for (const role of this.roles) {
 					if (user.is[role]) {
 						user.roles.push(role);
@@ -99,9 +107,9 @@ export class UserService extends CrudService<User> {
 		if (mode === 'white') {
 			this._store.remove('mode');
 
-			for (const _mode of this.modes) {
+			for (const localmode of this.modes) {
 				(document.body.parentNode as HTMLElement).classList.remove(
-					_mode
+					localmode
 				);
 			}
 		} else {
