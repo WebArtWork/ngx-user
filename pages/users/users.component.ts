@@ -5,6 +5,7 @@ import { TranslateService } from 'src/app/core/modules/translate/translate.servi
 import { AlertService, CoreService } from 'wacom';
 import { User } from '../../interfaces/user.interface';
 import { UserService } from '../../services/user.service';
+import { userFormComponents } from '../../formcomponents/user.formcomponents';
 
 @Component({
 	selector: 'app-users',
@@ -13,7 +14,7 @@ import { UserService } from '../../services/user.service';
 	standalone: false
 })
 export class UsersComponent {
-	form: FormInterface = this._form.getForm('user');
+	form: FormInterface = this._form.getForm('user', userFormComponents);
 
 	config = {
 		create: (): void => {
