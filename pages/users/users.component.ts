@@ -14,7 +14,7 @@ import { userFormComponents } from '../../formcomponents/user.formcomponents';
 	standalone: false
 })
 export class UsersComponent {
-	form: FormInterface = this._form.getForm('user', userFormComponents);
+	form: FormInterface = this._form.prepareForm(userFormComponents);
 
 	config = {
 		create: (): void => {

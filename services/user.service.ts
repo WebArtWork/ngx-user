@@ -9,6 +9,7 @@ import {
 import { User } from '../interfaces/user.interface';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -29,7 +30,7 @@ export class UserService extends CrudService<User> {
 
 	employees = (environment as unknown as { roles: string[] }).roles || [];
 
-	mode = 'white';
+	mode = 'dark';
 
 	modes = (
 		(environment as unknown as { modes: string[] }).modes || []
@@ -98,7 +99,7 @@ export class UserService extends CrudService<User> {
 			if (mode) {
 				this.setMode(mode);
 			} else {
-				this.setMode('white');
+				this.setMode('dark');
 			}
 		});
 	}
