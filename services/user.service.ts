@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { environment } from 'src/environments/environment';
 import {
 	AlertService,
 	CoreService,
-	CrudService,
 	HttpService,
-	StoreService
+	StoreService,
+	CrudService
 } from 'wacom';
 import { User } from '../interfaces/user.interface';
+import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -91,7 +92,7 @@ export class UserService extends CrudService<User> {
 		});
 
 		this.get({
-			query: this.roles.length > 1 ? 'roles=' + this.roles.join(',') : environment.appId ? 'appId=' + environment.appId : ''
+			query: environment.appId ? 'appId=' + environment.appId : ''
 		});
 
 		this._store.get('mode', (mode) => {
