@@ -5,7 +5,6 @@ import { TranslateService } from 'src/app/core/modules/translate/translate.servi
 import { AlertService, CoreService } from 'wacom';
 import { UserService } from '../../services/user.service';
 import { User } from '../../interfaces/user.interface';
-import { userFormComponents } from '../../formcomponents/user.formcomponents';
 
 @Component({
 	templateUrl: './clients.component.html',
@@ -13,29 +12,56 @@ import { userFormComponents } from '../../formcomponents/user.formcomponents';
 })
 export class ClientsComponent {
 	columns = ['name', 'email'];
-
-	form: FormInterface = this._form.prepareForm(userFormComponents);
-
+	form: FormInterface = this._form.getForm('user', {
+		formId: 'user',
+		title: 'User',
+		components: [
+			{
+				name: 'Text',
+				key: 'name',
+				focused: true,
+				fields: [
+					{
+						name: 'Placeholder',
+						value: 'fill Client name'
+					},
+					{
+						name: 'Label',
+						value: 'Name'
+					}
+				]
+			},
+			{
+				name: 'Email',
+				key: 'email',
+				fields: [
+					{
+						name: 'Placeholder',
+						value: 'fill Client email'
+					},
+					{
+						name: 'Label',
+						value: 'Email'
+					}
+				]
+			}
+		]
+	});
 	users: User[] = [];
-
 	private _page = 1;
-
 	setUsers(page = this._page) {
 		this._page = page;
-
 		this._core.afterWhile(
 			this,
 			() => {
 				this._us.get({ page }).subscribe((users) => {
 					this.users.splice(0, this.users.length);
-
 					this.users.push(...users);
 				});
 			},
 			250
 		);
 	}
-
 	config = {
 		paginate: this.setUsers.bind(this),
 		perPage: 20,
@@ -62,7 +88,6 @@ export class ClientsComponent {
 		update: (doc: User) => {
 			this._form.modal<User>(this.form, [], doc).then((updated: User) => {
 				this._core.copy(updated, doc);
-
 				this._us.update(doc, {
 					alert: this._translate.translate(
 						'User.Client has been updated'
